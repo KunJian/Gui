@@ -246,6 +246,7 @@ SOURCE_GROUP("TaskDialogs" FILES ${PartDesignGuiTaskDlgs_SRCS})
 SET(PartDesignGuiModule_SRCS
     AppPartDesignGui.cpp
     Command.cpp
+	AFP/CommandAFP.cpp
     CommandPrimitive.cpp
     CommandBody.cpp
     Resources/PartDesign.qrc
