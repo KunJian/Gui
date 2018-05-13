@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PartDesignGui::TaskAFPFaceFace</class>
+ <widget class="QWidget" name="PartDesignGui::TaskAFPFaceFace">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>331</width>
+    <height>343</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>AFP Face-Face</string>
+  </property>
+  <layout class="QGridLayout" name="DlgGridLayout">
+   <item row="0" column="0">
+    <layout class="QGridLayout" name="allGridLayout">
+     <item row="0" column="0">
+      <layout class="QGridLayout" name="IDGridLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="AFPFaceFaceIDLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>ID :</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="2">
+        <widget class="QLineEdit" name="AFPFaceFaceIDLineEdit"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="newIDPushButton">
+         <property name="text">
+          <string>New ID</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="selectPushButton">
+         <property name="text">
+          <string>Sel ...</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="1" column="0">
+      <widget class="QGroupBox" name="AFGroupBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>AFs</string>
+       </property>
+       <layout class="QGridLayout" name="AFGrpGridLayout">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="AFGridLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="AF1Label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>AF 1:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="AF1LineEdit"/>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="AF1GeomLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Geometry :</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QComboBox" name="AF1GeomComboBox">
+            <item>
+             <property name="text">
+              <string>Datum</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Plane</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Cylinder</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="AF2Label">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>AF 2:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="AF2LineEdit"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="AF2GeomLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Geometry :</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="AF2GeomComboBox">
+            <item>
+             <property name="text">
+              <string>Datum</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Plane</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Cylinder</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QGroupBox" name="ConstraintGroupBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Constraint</string>
+       </property>
+       <layout class="QGridLayout" name="constraintGrpGridLayout">
+        <item row="0" column="0">
+         <layout class="QGridLayout" name="constraintGridLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="constraintTypeLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Type :</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="constraintTypeComboBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <item>
+             <property name="text">
+              <string>Distance</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Contact</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Offset</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Angle</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="constraintParamLabel">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Parameters :</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="constraintParamLineEdit"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>AF1GeomComboBox</sender>
+   <signal>currentIndexChanged(int)</signal>
+   <receiver>AF1GeomComboBox</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>185</x>
+     <y>53</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>151</x>
+     <y>53</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
