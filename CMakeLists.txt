@@ -19,7 +19,8 @@ include_directories(
 link_directories(${OCC_LIBRARY_DIR})
 
 generate_from_xml(ViewProviderPy)
-
+generate_from_xml(AFP/AFPPy)
+generate_from_xml(AFP/AFPGroupPy)
 
 set(PartDesignGui_LIBS
     PartDesign
@@ -261,10 +262,26 @@ SET(PartDesignGuiModule_SRCS
 )
 SOURCE_GROUP("Module" FILES ${PartDesignGuiModule_SRCS})
 
+SET(AFPGuiModule_SRCS
+    AFP/AFP.h
+	AFP/AFP.cpp
+	AFP/AFPGroup.h
+	AFP/AFPGroup.cpp
+	AFP/ViewProviderAFP.h
+    AFP/ViewProviderAFP.cpp
+	AFP/ViewProviderAFPGroup.h
+    AFP/ViewProviderAFPGroup.cpp
+)
+SOURCE_GROUP("AFP" FILES ${AFPGuiModule_SRCS})
+
 
 SET(Python_SRCS
     ViewProviderPy.xml
     ViewProviderPyImp.cpp
+	AFP/AFPPy.xml
+	AFP/AFPPyImp.cpp
+	AFP/AFPGroupPy.xml
+	AFP/AFPGroupPyImp.cpp
 )
 SOURCE_GROUP("Python" FILES ${Python_SRCS})
 
@@ -278,6 +295,7 @@ SET(PartDesignGui_SRCS
     ${PartDesignGui_SRCS}
     ${PartDesignGui_UIC_HDRS}
     ${PartDesignGuiModule_SRCS}
+	${AFPGuiModule_SRCS}
     ${PartDesignGuiTaskDlgs_SRCS}
     ${PartDesignGuiViewProvider_SRCS}
 	${Python_SRCS}

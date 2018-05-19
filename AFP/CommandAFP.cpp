@@ -30,6 +30,10 @@
 #include <Mod/PartDesign/App/Feature.h>
 
 #include "TaskAFPFaceFace.h"
+#include "AFP.h"
+#include "AFPGroup.h"
+#include "ViewProviderAFP.h"
+
 #include "../ReferenceSelection.h"
 #include "../Utils.h"
 #include "../WorkflowManager.h"
@@ -37,6 +41,62 @@
 using namespace std;
 //using namespace Attacher;
 
+
+// Helper methods ===========================================================
+namespace PartDesignGui
+{
+	PartDesign::AFPGroup* getAFPGroup(App::Part* _AFPPart)
+	{
+		PartDesign::AFPGroup* AFPGrp = 0;
+		std::vector<App::DocumentObject*> partObjs = _AFPPart->getObjects();
+
+		for (std::vector<App::DocumentObject*>::const_iterator it = partObjs.begin(); it != partObjs.end(); ++it) {
+			if ((*it)->getTypeId().isDerivedFrom(PartDesign::AFPGroup::getClassTypeId())) {
+				AFPGrp = static_cast<PartDesign::AFPGroup*>(*it);
+				break;
+			}
+		}
+
+		return AFPGrp;
+	}
+
+	bool getAFPPrerequisits(App::Part** _AFPPart, PartDesign::AFPGroup** AFPGrp)
+	{
+		*_AFPPart = PartDesignGui::getActivePart();
+
+		// find the AFP group of the active PartDesign
+		*AFPGrp = getAFPGroup(*_AFPPart);
+
+		// if it hasen't aleardy one, create one:
+		if (!*AFPGrp) {
+			Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().addObject('PartDesign::AFPGroup','AFPGroup')");
+			Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().ActiveObject.Label = 'AFPGroup'");
+			Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.Annotations = App.activeDocument().%s.Annotations + [App.activeDocument().ActiveObject]",
+				(*_AFPPart)->getNameInDocument(), (*_AFPPart)->getNameInDocument());
+		}
+
+		// find now
+		*AFPGrp = getAFPGroup(*_AFPPart);
+
+		if (!*AFPGrp)
+			throw Base::Exception("Could not create PartDesign::AFPGroup in active PartDesign");
+
+		// return with no error
+		return false;
+
+	}
+
+	std::string asSubLinkString(Part::Feature* _feat, std::string _element)
+	{
+		std::string buf;
+		buf += "(App.ActiveDocument.";
+		buf += _feat->getNameInDocument();
+		buf += ",['";
+		buf += _element;
+		buf += "'])";
+		return buf;
+	}
+} /* PartDesignGui */
 
 /* AFP commands =======================================================*/
 
@@ -56,42 +116,99 @@ CmdPartDesignAFPFaceFace::CmdPartDesignAFPFaceFace() : Command("PartDesign_AFPFa
 void CmdPartDesignAFPFaceFace::activated(int iMsg)
 {
 	Q_UNUSED(iMsg);
-	App::Document *doc = getDocument();
-	if (!PartDesignGui::assureModernWorkflow(doc))
+	App::Document* appDoc = getDocument();
+	if (!PartDesignGui::assureModernWorkflow(appDoc))
 		return;
 
-	PartDesign::Body *pcActiveBody = PartDesignGui::getBody(true);
+	Gui::Document* guiDoc = Gui::Application::Instance->getDocument(appDoc);
 
-	if (!pcActiveBody)
+	//PartDesign::Body *pcActiveBody = PartDesignGui::getBody(true);
+	//if (!pcActiveBody)
+	//	return;
+
+	//App::DocumentObject* feature = NULL;
+	//PartDesignGui::TaskAFPFaceFace::featureStatus status;
+
+	//// Show dialog and let user pick plane
+	//Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
+	//PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
+	//if (dlg && !facePick) {
+	//	QMessageBox msgBox;
+	//	msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
+	//	msgBox.setInformativeText(QObject::tr("Do you want to close this dialog?"));
+	//	msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+	//	msgBox.setDefaultButton(QMessageBox::Yes);
+	//	int ret = msgBox.exec();
+	//	if (ret == QMessageBox::Yes)
+	//		Gui::Control().closeDialog();
+	//	else {
+	//		return;
+	//	}
+	//}
+
+	//if (dlg)
+	//	Gui::Control().closeDialog();
+
+	//Gui::Selection().clearSelection();
+	//Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(feature));
+
+	App::Part* AFPPart = 0;
+	PartDesign::AFPGroup* AFPGrp = 0;
+
+	// retrive the standard objects needed
+	if (PartDesignGui::getAFPPrerequisits(&AFPPart, &AFPGrp))
+		return ;
+
+	std::vector<Gui::SelectionObject> objs = Gui::Selection().getSelectionEx();
+	if (objs.size() != 1) {
+		QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"), QObject::tr("Only one geometries supported by AFPs"));
+		return ;
+	};
+
+	App::DocumentObject* obj = objs.front().getObject();
+	if (obj == NULL || !obj->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId()))
+		return ;
+
+	Part::Feature* selFeat = dynamic_cast<PartDesign::Feature*>(obj);
+	if (selFeat == NULL)
 		return;
 
-	App::DocumentObject* feature = NULL;
-	PartDesignGui::TaskAFPFaceFace::featureStatus status;
-	
-	// Show dialog and let user pick plane
-	Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
-	PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
-	if (dlg && !facePick) {
-		QMessageBox msgBox;
-		msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
-		msgBox.setInformativeText(QObject::tr("Do you want to close this dialog?"));
-		msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-		msgBox.setDefaultButton(QMessageBox::Yes);
-		int ret = msgBox.exec();
-		if (ret == QMessageBox::Yes)
-			Gui::Control().closeDialog();
-		else {
-			return;
-		}
+	openCommand("Insert Face-Face AFP");
+	std::string AFPName = getUniqueObjectName("AFP-FaceFace");
+	doCommand(Doc, "App.activeDocument().addObject('PartDesign::AFP','%s')", AFPName.c_str());
+	doCommand(Doc, "App.activeDocument().ActiveObject.m_type = 'AFP-FaceFace'");
+
+	std::vector<Gui::ViewProvider*> vps = guiDoc->getViewProvidersOfType(PartDesignGui::ViewProviderAFP::getClassTypeId());
+	if (vps.size() != 1)
+	{
+		QMessageBox::warning(Gui::getMainWindow(), QObject::tr("No ViewProviderAFP"), QObject::tr("No ViewProviderAFP has been constructed!"));
+		return;
 	}
 
-	if (dlg)
-		Gui::Control().closeDialog();
+	std::stringstream AFStr;
+	PartDesignGui::ViewProviderAFP* AFPViewProvider = dynamic_cast<PartDesignGui::ViewProviderAFP*>(vps[0]);
+	PartDesign::AFP* AFPObj = dynamic_cast<PartDesign::AFP*>(AFPViewProvider->getObject());
+	if (AFPObj == NULL)
+		AFStr << "App.activeDocument().ActiveObject.m_first = " << PartDesignGui::asSubLinkString(selFeat, objs[0].getSubNames()[0]);
+	else
+	{
+		if (!AFPObj->m_first.getValue())
+			AFStr << "App.activeDocument().ActiveObject.m_first = " << PartDesignGui::asSubLinkString(selFeat, objs[0].getSubNames()[0]);
+		else if (!AFPObj->m_second.getValue())
+			AFStr << "App.activeDocument().ActiveObject.m_second = " << PartDesignGui::asSubLinkString(selFeat, objs[0].getSubNames()[0]);
+		else
+			AFStr << "App.activeDocument().ActiveObject.m_first = " << PartDesignGui::asSubLinkString(selFeat, objs[0].getSubNames()[0]);
+	}
 
-	Gui::Selection().clearSelection();
-	Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(feature, status));
+	doCommand(Doc, AFStr.str().c_str());
+	doCommand(Doc, "App.activeDocument().%s.m_AFPs = App.activeDocument().%s.m_AFPs + [App.activeDocument().ActiveObject]", AFPGrp->getNameInDocument(), AFPGrp->getNameInDocument());
 
+	//updateActive();
+	doCommand(Doc, "Gui.ActiveDocument.setEdit('%s',0)", AFPName.c_str());
 
+	commitCommand();
+
+	Gui::Selection().clearCompleteSelection();
 }
 
 bool CmdPartDesignAFPFaceFace::isActive(void)

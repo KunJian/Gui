@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<GenerateModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="generateMetaModel_Module.xsd">
+  <PythonExport 
+    Father="DocumentObjectPy"  
+    Name="AFPGroupPy" 
+    Twin="AFPGroup" 
+    TwinPointer="AFPGroup" 
+    Include="Mod/PartDesign/Gui/AFP/AFPGroup.h" 
+    Namespace="PartDesign" 
+    FatherInclude="App/DocumentObjectPy.h" 
+    FatherNamespace="App">
+    <Documentation>
+      <Author Licence="LGPL" Name="Juergen Riegel" EMail="FreeCAD@juergen-riegel.net" />
+      <UserDocu>Base class of all objects in PartDesign</UserDocu>
+    </Documentation>
+  </PythonExport>
+</GenerateModel>
+
+

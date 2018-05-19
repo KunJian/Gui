@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>331</width>
+    <width>350</width>
     <height>343</height>
    </rect>
   </property>
@@ -251,6 +251,11 @@
             </item>
             <item>
              <property name="text">
+              <string>Coincident</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>Distance</string>
              </property>
             </item>
@@ -262,6 +267,11 @@
             <item>
              <property name="text">
               <string>Angle</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>None</string>
              </property>
             </item>
            </widget>

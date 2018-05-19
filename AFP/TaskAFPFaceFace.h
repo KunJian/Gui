@@ -7,8 +7,15 @@
 #include <Gui/TaskView/TaskDialog.h>
 #include <App/DocumentObject.h>
 
-namespace PartDesignGui {
+#include <Mod/Assembly/App/opendcm/core.hpp>
+#include <Mod/Assembly/App/Solver/Solver.h>
 
+#include <QComboBox>
+
+#include "ViewProviderAFP.h"
+
+namespace PartDesignGui
+{
 	class SoSwitch; //- 其作用目前还不清楚，需要继续确认，2018-05-12，xzj
 	class Ui_TaskAFPFaceFace;
 
@@ -28,7 +35,7 @@ namespace PartDesignGui {
 			afterTip
 		};
 
-		TaskAFPFaceFace(App::DocumentObject* _feature, const featureStatus& _status, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
+		TaskAFPFaceFace(ViewProviderAFP* _vp, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
 		~TaskAFPFaceFace();
 
 		App::DocumentObject* getFeature();
@@ -38,8 +45,11 @@ namespace PartDesignGui {
 		void onSelectionChanged(const Gui::SelectionChanges& _msg);
 		void onFaceSelection(const bool pressed = true);
 
+		void onConstraintSelection(QComboBox* const _combBox);
+
 	protected:
-		const QString onAddSelection(const Gui::SelectionChanges& _msg);
+		const QString onAddSelection(const Gui::SelectionChanges& _msg, App::DocumentObject* _selObj, QString& _AFPText);
+		void setLineEdit(QLineEdit* const _lnEdit, const QString _refText, const char* _subName, bool _onFaceSel, bool _faceSel);
 		void exitSelectionMode();
 
 		QString getFaceName(void) const;
@@ -52,12 +62,12 @@ namespace PartDesignGui {
 
 	private:
 		Ui_TaskAFPFaceFace* m_ui;
-		QWidget* m_proxy;
-		bool m_doSelection;
-		std::string m_documentName;
+		QWidget*            m_proxy;
+		ViewProviderAFP*    m_view;
 
-		QString m_featureStr;
-		featureStatus m_status;
+		std::string   m_documentName;
+		QString       m_featureStr;
+
 		const QString getFeatureStatusString(const featureStatus _st);
 	};
 
@@ -67,7 +77,7 @@ namespace PartDesignGui {
 		Q_OBJECT
 
 	public:
-		TaskDlgAFPFaceFace(App::DocumentObject* _feature, const TaskAFPFaceFace::featureStatus& _status);
+		TaskDlgAFPFaceFace(ViewProviderAFP* _vp);
 		~TaskDlgAFPFaceFace();
 
 	public:
@@ -92,7 +102,7 @@ namespace PartDesignGui {
 
 	protected:
 		TaskAFPFaceFace* m_facePick;
-		bool m_accepted;
+		ViewProviderAFP* m_view;
 	};
 }
 

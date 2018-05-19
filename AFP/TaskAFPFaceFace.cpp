@@ -10,6 +10,7 @@
 #include <Gui/MainWindow.h>
 #include <Gui/Document.h>
 #include <Gui/Control.h>
+#include <Gui/Command.h>
 #include <App/Document.h>
 #include <App/Part.h>
 #include <Base/Tools.h>
@@ -22,6 +23,9 @@
 
 #include "TaskAFPFaceFace.h"
 #include "ui_TaskAFPFaceFace.h"
+
+#include "AFP.h"
+#include "AFPGroup.h"
 
 #include <Mod/Part/App/DatumFeature.h>
 #include <Mod/PartDesign/App/DatumPlane.h>
@@ -49,8 +53,10 @@ const QString TaskAFPFaceFace::getFeatureStatusString(const featureStatus _st)
 }
 
 
-TaskAFPFaceFace::TaskAFPFaceFace(App::DocumentObject* _feature, const featureStatus& _status, QWidget* _parent)
-	: TaskBox(Gui::BitmapFactory().pixmap("edit-select-box"), tr("AFP Face-Face"), true, _parent), m_ui(new Ui_TaskAFPFaceFace), m_doSelection(false)
+TaskAFPFaceFace::TaskAFPFaceFace(ViewProviderAFP* _vp, QWidget* _parent)
+	: TaskBox(Gui::BitmapFactory().pixmap("edit-select-box"), tr("AFP Face-Face"), true, _parent)
+	, m_ui(new Ui_TaskAFPFaceFace)
+	, m_view(_vp)
 {
 	m_proxy = new QWidget(this);
 	m_ui->setupUi(m_proxy);
@@ -63,12 +69,15 @@ TaskAFPFaceFace::TaskAFPFaceFace(App::DocumentObject* _feature, const featureSta
 	m_ui->AF2GeomComboBox->setEnabled(false);
 
 	connect(m_ui->AF1LineEdit, SIGNAL(focusInEvent()), this, SLOT(onFaceSelection()));
-	connect(m_ui->AF2LineEdit, SIGNAL(focusInEvent()), this, SLOT(onFaceSelection()));
 	connect(m_ui->AF1LineEdit, SIGNAL(textChanged()), this, SLOT(onUpdate()));
+	connect(m_ui->AF1GeomComboBox, SIGNAL(activated(int)), this, SLOT(onConstraintSelection(m_ui->AF1GeomComboBox)));
+
+	connect(m_ui->AF2LineEdit, SIGNAL(focusInEvent()), this, SLOT(onFaceSelection()));
 	connect(m_ui->AF2LineEdit, SIGNAL(textChanged()), this, SLOT(onUpdate()));
+	connect(m_ui->AF2GeomComboBox, SIGNAL(activated(int)), this, SLOT(onConstraintSelection(m_ui->AF2GeomComboBox)));
 
 	bool attached = false;
-	if (_feature)
+	if (m_view->getObject())
 	{
 		if (m_ui->AF1LineEdit->text().isEmpty() && m_ui->AF1LineEdit->isEnabled())
 		{
@@ -85,8 +94,7 @@ TaskAFPFaceFace::TaskAFPFaceFace(App::DocumentObject* _feature, const featureSta
 					m_ui->AF1LineEdit->setText(QString::fromLatin1(feature->getNameInDocument()) + QString::fromLatin1(":") + tr("Face") + QString::number(faceId));
 			}
 		}
-
-		App::Document* pDoc = _feature->getDocument();
+		App::Document* pDoc = m_view->getObject()->getDocument();
 		m_documentName = pDoc->getName();
 		if (!attached) {
 			attached = true;
@@ -98,8 +106,6 @@ TaskAFPFaceFace::TaskAFPFaceFace(App::DocumentObject* _feature, const featureSta
 		if (m_ui->AF1LineEdit->text().isEmpty() && m_ui->AF1LineEdit->isEnabled())
 			QMetaObject::invokeMethod(m_ui->AF1LineEdit, "setFocus", Qt::QueuedConnection);
 	}
-
-	m_status = _status;
 }
 
 TaskAFPFaceFace::~TaskAFPFaceFace()
@@ -134,88 +140,87 @@ App::DocumentObject* TaskAFPFaceFace::getFeature()
 	return result;
 }
 
-
 void TaskAFPFaceFace::onSelectionChanged(const Gui::SelectionChanges& _msg)
 {
 	if (_msg.Type == Gui::SelectionChanges::AddSelection) {
-		QString refText = onAddSelection(_msg);
+		QString AFPText;
+		App::DocumentObject* selObj = NULL;
+
+		QString refText = onAddSelection(_msg, selObj, AFPText);
 		if (refText.length() > 0) {
+			PartDesign::AFP* obj = dynamic_cast<PartDesign::AFP*>(m_view->getObject());
+			std::vector<std::string> subNames;
+			subNames.push_back(_msg.pSubName);
+
 			if (m_ui->AF1LineEdit->isEnabled())
 			{
-				m_ui->AF1LineEdit->blockSignals(true);
-				m_ui->AF1LineEdit->setText(refText);
-				m_ui->AF1LineEdit->setProperty("FaceName", QByteArray(_msg.pSubName));
-				m_ui->AF1LineEdit->blockSignals(false);
-				// Turn off reference selection mode
-				onFaceSelection(false);
-				onUpdate();
+				obj->m_first.setValue(selObj, subNames);
+				setLineEdit(m_ui->AF1LineEdit, refText, _msg.pSubName, true, false);
 			}
 			else if (m_ui->AF2LineEdit->isEnabled())
 			{
-				m_ui->AF2LineEdit->blockSignals(true);
-				m_ui->AF2LineEdit->setText(refText);
-				m_ui->AF2LineEdit->setProperty("FaceName", QByteArray(_msg.pSubName));
-				m_ui->AF2LineEdit->blockSignals(false);
-				// Turn off reference selection mode
-				onFaceSelection(false);
-				onUpdate();
+				obj->m_second.setValue(selObj, subNames);
+				setLineEdit(m_ui->AF2LineEdit, refText, _msg.pSubName, true, false);
 			}
+			App::GetApplication().getActiveDocument()->recompute();
+			m_view->draw();
 		}
-		else {
+		else
+		{
 			if (m_ui->AF1LineEdit->isEnabled())
-			{
-				m_ui->AF1LineEdit->blockSignals(true);
-				m_ui->AF1LineEdit->setText(tr(""));
-				m_ui->AF1LineEdit->setProperty("FaceName", QByteArray());
-				m_ui->AF1LineEdit->blockSignals(false);
-				onUpdate();
-			}
+				setLineEdit(m_ui->AF1LineEdit, tr(""), "", false, false);
 			else if (m_ui->AF2LineEdit->isEnabled())
-			{
-				m_ui->AF2LineEdit->blockSignals(true);
-				m_ui->AF2LineEdit->setText(tr(""));
-				m_ui->AF2LineEdit->setProperty("FaceName", QByteArray());
-				m_ui->AF2LineEdit->blockSignals(false);
-				onUpdate();
-			}
+				setLineEdit(m_ui->AF2LineEdit, tr(""), "", false, false);
 		}
 	}
 	else if (_msg.Type == Gui::SelectionChanges::ClrSelection) {
 		if (m_ui->AF1LineEdit->isEnabled())
-		{
-			m_ui->AF1LineEdit->blockSignals(true);
-			m_ui->AF1LineEdit->setText(tr(""));
-			m_ui->AF1LineEdit->setProperty("FaceName", QByteArray());
-			m_ui->AF1LineEdit->blockSignals(false);
-			onUpdate();
-		}
+			setLineEdit(m_ui->AF1LineEdit, tr(""), "", false, false);
 		else if (m_ui->AF2LineEdit->isEnabled())
-		{
-			m_ui->AF2LineEdit->blockSignals(true);
-			m_ui->AF2LineEdit->setText(tr(""));
-			m_ui->AF2LineEdit->setProperty("FaceName", QByteArray());
-			m_ui->AF2LineEdit->blockSignals(false);
-			onUpdate();
-		}
+			setLineEdit(m_ui->AF2LineEdit, tr(""), "", false, false);
 	}
 }
 
-const QString TaskAFPFaceFace::onAddSelection(const Gui::SelectionChanges& _msg)
+void TaskAFPFaceFace::setLineEdit(QLineEdit* const _lnEdit, const QString _refText, const char* _subName, bool _onFaceSel, bool _faceSel)
 {
-	App::DocumentObject* selObj = NULL;
+	_lnEdit->blockSignals(true);
+	_lnEdit->setText(_refText);
+	if (_subName == "")
+		_lnEdit->setProperty("FaceName", QByteArray());
+	else
+		_lnEdit->setProperty("FaceName", QByteArray(_subName));
+
+	_lnEdit->blockSignals(false);
+	if (_onFaceSel)
+		onFaceSelection(_faceSel);
+
+	onUpdate();
+}
+
+const QString TaskAFPFaceFace::onAddSelection(const Gui::SelectionChanges& _msg, App::DocumentObject* _selObj, QString& _AFPText)
+{
 	std::vector<Gui::SelectionObject> selection = Gui::Selection().getSelectionEx();
 	if (!selection.empty())
-		selObj = selection.front().getObject();
-
-	if (selObj == NULL)
+		_selObj = selection.front().getObject();
+	if (_selObj == NULL || !_selObj->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId()))
 		return QString();
+
+	PartDesign::Body *pcBody = PartDesignGui::getBodyFor(_selObj, false);
+	if (pcBody == NULL)
+		return QString();
+
+	App::Part *pPart = PartDesignGui::getPartFor(pcBody, false);
+	if (pPart == NULL)
+		return QString();
+
 	std::string subname = _msg.pSubName;
 	QString refStr;
 
 	// Remove subname for planes and datum features
 	if (subname.size() > 4) {
 		int faceId = std::atoi(&subname[4]);
-		refStr = QString::fromLatin1(selObj->getNameInDocument()) + QString::fromLatin1(":") + QObject::tr("Face") + QString::number(faceId);
+		refStr = QString::fromLatin1(_selObj->getNameInDocument()) + QString::fromLatin1(":") + QObject::tr("Face") + QString::number(faceId);
+		_AFPText = QString::fromLatin1(pPart->getNameInDocument()) + QString::fromLatin1(":") + QString::fromLatin1(pcBody->getNameInDocument()) + QString::fromLatin1(":") + refStr;
 	}
 
 	return refStr;
@@ -241,6 +246,49 @@ void TaskAFPFaceFace::onFaceSelection(const bool pressed) {
 	catch (const Base::Exception& e) {
 		e.ReportException();
 	}
+}
+
+void TaskAFPFaceFace::onConstraintSelection(QComboBox* const _combBox)
+{
+	//{ "Contact", "Coincident", "Distance", "Offset", "Angle", "None", NULL }
+	PartDesign::AFP* AFPObj = dynamic_cast<PartDesign::AFP*>(m_view->getObject());
+	AFPObj->m_solutionSpace.setValue(dcm::negative_directional);
+
+	QString cons = _combBox->currentText();
+	if (cons == QObject::tr("Contact"))
+		AFPObj->m_constraint.setValue("Contact");
+	else if (cons == QObject::tr("Distance"))
+	{
+		AFPObj->m_constraint.setValue("Distance");
+		QString str = m_ui->constraintParamLineEdit->text();
+		if (!str.isEmpty())
+			AFPObj->m_value.setValue(str.toDouble());
+
+		AFPObj->m_orientation.setValue(dcm::opposite);
+	}
+	else if (cons == QObject::tr("Offset"))
+	{
+		AFPObj->m_constraint.setValue("Offset");
+		QString str = m_ui->constraintParamLineEdit->text();
+		if (!str.isEmpty())
+			AFPObj->m_value.setValue(str.toDouble());
+
+		AFPObj->m_orientation.setValue(dcm::parallel);
+	}
+	else if (cons == QObject::tr("Angle"))
+	{
+		AFPObj->m_constraint.setValue("Angle");
+		QString str = m_ui->constraintParamLineEdit->text();
+		if (!str.isEmpty())
+			AFPObj->m_value.setValue(str.toDouble());
+	}
+	else if (cons == QObject::tr("None"))
+		AFPObj->m_constraint.setValue("None");
+	else
+		AFPObj->m_constraint.setValue("");
+
+	App::GetApplication().getActiveDocument()->recompute();
+	m_view->draw();
 }
 
 QString TaskAFPFaceFace::getFaceName(void) const
@@ -285,9 +333,9 @@ void TaskAFPFaceFace::exitSelectionMode()
 //**************************************************************************
 // TaskDialog
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-TaskDlgAFPFaceFace::TaskDlgAFPFaceFace(App::DocumentObject* _feature, const TaskAFPFaceFace::featureStatus& _status) : TaskDialog(), m_accepted(false)
+TaskDlgAFPFaceFace::TaskDlgAFPFaceFace(ViewProviderAFP* _vp) : TaskDialog(), m_view(_vp)
 {
-	m_facePick = new TaskAFPFaceFace(_feature, _status);
+	m_facePick = new TaskAFPFaceFace(_vp);
 	Content.push_back(m_facePick);
 }
 
@@ -312,13 +360,17 @@ void TaskDlgAFPFaceFace::clicked(int)
 
 bool TaskDlgAFPFaceFace::accept()
 {
-	m_accepted = true;
+	std::string document = getDocumentName(); // needed because resetEdit() deletes this instance
+	Gui::Command::doCommand(Gui::Command::Gui, "Gui.getDocument('%s').resetEdit()", document.c_str());
+
 	return true;
 }
 
 bool TaskDlgAFPFaceFace::reject()
 {
-	m_accepted = false;
+	std::string document = getDocumentName(); // needed because resetEdit() deletes this instance
+	Gui::Command::doCommand(Gui::Command::Gui, "Gui.getDocument('%s').resetEdit()", document.c_str());
+
 	return true;
 }
 
