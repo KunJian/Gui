@@ -12,7 +12,7 @@ namespace PartDesignGui {
 	class SoSwitch; //- 其作用目前还不清楚，需要继续确认，2018-05-12，xzj
 	class Ui_TaskAFPFaceFace;
 
-	class TaskAFPFaceFace : public Gui::TaskView::TaskBox, public Gui::SelectionObserver, public Gui::DocumentObserver/*public QDialog*/
+	class TaskAFPFaceFace : public Gui::TaskView::TaskBox, public Gui::SelectionObserver, public Gui::DocumentObserver
 	{
 		Q_OBJECT
 
@@ -24,34 +24,41 @@ namespace PartDesignGui {
 			otherBody,
 			otherPart,
 			notInBody,
-			basePlane,
+			AFPFace,
 			afterTip
 		};
 
-		TaskAFPFaceFace(std::vector<App::DocumentObject*> &objects, const std::vector<featureStatus> &status, QWidget *parent = 0); //增加特征状态vector参数，2018-05-12，xzj
+		TaskAFPFaceFace(App::DocumentObject* _feature, const featureStatus& _status, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
 		~TaskAFPFaceFace();
 
-		std::vector<App::DocumentObject*> getFeature();
+		App::DocumentObject* getFeature();
 
-		protected Q_SLOTS:
-		void onUpdate(bool);
-		void onSelectionChanged(const Gui::SelectionChanges& msg);
+	protected Q_SLOTS:
+		void onUpdate();
+		void onSelectionChanged(const Gui::SelectionChanges& _msg);
+		void onFaceSelection(const bool pressed = true);
 
 	protected:
+		const QString onAddSelection(const Gui::SelectionChanges& _msg);
+		void exitSelectionMode();
+
+		QString getFaceName(void) const;
+		static QString getFaceReference(const QString& obj, const QString& sub);
+
 		/** Notifies on undo */
-		virtual void slotUndoDocument(const Gui::Document& Doc);
+		virtual void slotUndoDocument(const Gui::Document& _Doc);
 		/** Notifies on document deletion */
-		virtual void slotDeleteDocument(const Gui::Document& Doc);
+		virtual void slotDeleteDocument(const Gui::Document& _Doc);
 
 	private:
-		Ui_TaskAFPFaceFace* ui;
-		QWidget* proxy;
-		bool doSelection;
-		std::string documentName;
+		Ui_TaskAFPFaceFace* m_ui;
+		QWidget* m_proxy;
+		bool m_doSelection;
+		std::string m_documentName;
 
-		std::vector<QString> features;
-		std::vector<featureStatus> statuses;
-		const QString getFeatureStatusString(const featureStatus st);
+		QString m_featureStr;
+		featureStatus m_status;
+		const QString getFeatureStatusString(const featureStatus _st);
 	};
 
 	/// simulation dialog for the TaskView
@@ -60,9 +67,7 @@ namespace PartDesignGui {
 		Q_OBJECT
 
 	public:
-		TaskDlgAFPFaceFace(std::vector<App::DocumentObject*> &object, 
-			const std::vector<TaskAFPFaceFace::featureStatus> &status,
-			boost::function<bool(std::vector<App::DocumentObject*>)> afunc);
+		TaskDlgAFPFaceFace(App::DocumentObject* _feature, const TaskAFPFaceFace::featureStatus& _status);
 		~TaskDlgAFPFaceFace();
 
 	public:
@@ -86,10 +91,8 @@ namespace PartDesignGui {
 		}
 
 	protected:
-		TaskAFPFaceFace* facePick;
-		bool accepted;
-
-		boost::function<bool(std::vector<App::DocumentObject*>)>  acceptFunction;
+		TaskAFPFaceFace* m_facePick;
+		bool m_accepted;
 	};
 }
 

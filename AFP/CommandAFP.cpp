@@ -2,14 +2,40 @@
 #include "../PreCompiled.h"
 
 #ifndef _PreComp_
+# include <TopoDS_Face.hxx>
+# include <TopoDS.hxx>
+# include <BRepAdaptor_Surface.hxx>
+# include <TopExp_Explorer.hxx>
 # include <QMessageBox>
+# include <Inventor/nodes/SoCamera.h>
 #endif
 
+#include <sstream>
+#include <algorithm>
+
+#include <App/DocumentObjectGroup.h>
+#include <App/Part.h>
 #include <Gui/Application.h>
 #include <Gui/Command.h>
 #include <Gui/Control.h>
+#include <Gui/Selection.h>
+#include <Gui/MainWindow.h>
+#include <Gui/Document.h>
+#include <Gui/View3DInventor.h>
+#include <Gui/View3DInventorViewer.h>
+
+#include <Mod/Part/App/FeatureFace.h>
+
+#include <Mod/PartDesign/App/Body.h>
+#include <Mod/PartDesign/App/Feature.h>
 
 #include "TaskAFPFaceFace.h"
+#include "../ReferenceSelection.h"
+#include "../Utils.h"
+#include "../WorkflowManager.h"
+
+using namespace std;
+//using namespace Attacher;
 
 
 /* AFP commands =======================================================*/
@@ -30,10 +56,17 @@ CmdPartDesignAFPFaceFace::CmdPartDesignAFPFaceFace() : Command("PartDesign_AFPFa
 void CmdPartDesignAFPFaceFace::activated(int iMsg)
 {
 	Q_UNUSED(iMsg);
+	App::Document *doc = getDocument();
+	if (!PartDesignGui::assureModernWorkflow(doc))
+		return;
 
-	std::vector<App::DocumentObject*> planes;
-	std::vector<PartDesignGui::TaskAFPFaceFace::featureStatus> status;
-	boost::function<bool(std::vector<App::DocumentObject*>)> afunc;
+	PartDesign::Body *pcActiveBody = PartDesignGui::getBody(true);
+
+	if (!pcActiveBody)
+		return;
+
+	App::DocumentObject* feature = NULL;
+	PartDesignGui::TaskAFPFaceFace::featureStatus status;
 	
 	// Show dialog and let user pick plane
 	Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
@@ -56,7 +89,9 @@ void CmdPartDesignAFPFaceFace::activated(int iMsg)
 		Gui::Control().closeDialog();
 
 	Gui::Selection().clearSelection();
-	Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(planes, status, afunc));
+	Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(feature, status));
+
+
 }
 
 bool CmdPartDesignAFPFaceFace::isActive(void)

@@ -18,26 +18,30 @@
 #include <Mod/PartDesign/App/Body.h>
 
 #include "../Utils.h"
+#include "../ReferenceSelection.h"
 
 #include "TaskAFPFaceFace.h"
 #include "ui_TaskAFPFaceFace.h"
 
 #include <Mod/Part/App/DatumFeature.h>
 #include <Mod/PartDesign/App/DatumPlane.h>
+#include <Mod/PartDesign/App/Feature.h>
+
+#include <QMessageBox>
 
 using namespace PartDesignGui;
 using namespace Attacher;
 
 // TODO Do ve should snap here to App:Part or GeoFeatureGroup/DocumentObjectGroup ? (2015-09-04, Fat-Zer)
-const QString TaskAFPFaceFace::getFeatureStatusString(const featureStatus st)
+const QString TaskAFPFaceFace::getFeatureStatusString(const featureStatus _st)
 {
-	switch (st) {
+	switch (_st) {
 	case validFeature: return tr("Valid");
 	case invalidShape: return tr("Invalid shape");
 	case otherBody: return tr("Belongs to another body");
 	case otherPart: return tr("Belongs to another part");
 	case notInBody: return tr("Doesn't belong to any body");
-	case basePlane: return tr("Base plane");
+	case AFPFace: return tr("AFP face");
 	case afterTip: return tr("Feature is located after the tip feature");
 	}
 
@@ -45,120 +49,235 @@ const QString TaskAFPFaceFace::getFeatureStatusString(const featureStatus st)
 }
 
 
-TaskAFPFaceFace::TaskAFPFaceFace(std::vector<App::DocumentObject*>& objects, const std::vector<featureStatus>& status, QWidget* parent)
-	: TaskBox(Gui::BitmapFactory().pixmap("edit-select-box"), tr("AFP Face-Face"), true, parent), ui(new Ui_TaskAFPFaceFace), doSelection(false)
+TaskAFPFaceFace::TaskAFPFaceFace(App::DocumentObject* _feature, const featureStatus& _status, QWidget* _parent)
+	: TaskBox(Gui::BitmapFactory().pixmap("edit-select-box"), tr("AFP Face-Face"), true, _parent), m_ui(new Ui_TaskAFPFaceFace), m_doSelection(false)
 {
-	proxy = new QWidget(this);
-	ui->setupUi(proxy);
+	m_proxy = new QWidget(this);
+	m_ui->setupUi(m_proxy);
+	groupLayout()->addWidget(m_proxy);
 
-	auto statusIt = status.cbegin();
-	auto objIt = objects.begin();
-	assert(status.size() == objects.size());
+	m_ui->AFPFaceFaceIDLineEdit->setEnabled(false);
+	m_ui->AF1LineEdit->setEnabled(true);
+	m_ui->AF1GeomComboBox->setEnabled(false);
+	m_ui->AF2LineEdit->setEnabled(true);
+	m_ui->AF2GeomComboBox->setEnabled(false);
+
+	connect(m_ui->AF1LineEdit, SIGNAL(focusInEvent()), this, SLOT(onFaceSelection()));
+	connect(m_ui->AF2LineEdit, SIGNAL(focusInEvent()), this, SLOT(onFaceSelection()));
+	connect(m_ui->AF1LineEdit, SIGNAL(textChanged()), this, SLOT(onUpdate()));
+	connect(m_ui->AF2LineEdit, SIGNAL(textChanged()), this, SLOT(onUpdate()));
 
 	bool attached = false;
-	for (; statusIt != status.end(); ++statusIt, ++objIt) {
-		//QListWidgetItem* item = new QListWidgetItem(QString::fromLatin1("%1 (%2)")
-		//	.arg(QString::fromUtf8((*objIt)->Label.getValue()))
-		//	.arg(getFeatureStatusString(*statusIt)));
+	if (_feature)
+	{
+		if (m_ui->AF1LineEdit->text().isEmpty() && m_ui->AF1LineEdit->isEnabled())
+		{
+			std::vector<Gui::SelectionObject> selection = Gui::Selection().getSelectionEx();
+			if (!selection.empty() && selection.front().hasSubNames()) {
+				App::DocumentObject* feature = selection.front().getObject();
+				std::string sub = selection.front().getSubNames().front();
 
-		//item->setData(Qt::UserRole, QString::fromLatin1((*objIt)->getNameInDocument()));
-		//ui->listWidget->addItem(item);
+				int faceId = -1;
+				if (sub.substr(0, 4) == "Face")
+					faceId = std::atoi(&sub[4]);
 
-		App::Document* pDoc = (*objIt)->getDocument();
-		documentName = pDoc->getName();
+				if (faceId >= 0)
+					m_ui->AF1LineEdit->setText(QString::fromLatin1(feature->getNameInDocument()) + QString::fromLatin1(":") + tr("Face") + QString::number(faceId));
+			}
+		}
+
+		App::Document* pDoc = _feature->getDocument();
+		m_documentName = pDoc->getName();
 		if (!attached) {
 			attached = true;
 			attachDocument(Gui::Application::Instance->getDocument(pDoc));
 		}
-
-		//check if we need to set any origin in temporary visibility mode
-		//if (*statusIt != invalidShape && (*objIt)->isDerivedFrom(App::OriginFeature::getClassTypeId())) {
-		//	App::Origin *origin = static_cast<App::OriginFeature*> (*objIt)->getOrigin();
-		//	if (origin) {
-		//		if ((*objIt)->isDerivedFrom(App::Plane::getClassTypeId())) {
-		//			originVisStatus[origin].set(planeBit, true);
-		//		}
-		//		else if ((*objIt)->isDerivedFrom(App::Line::getClassTypeId())) {
-		//			originVisStatus[origin].set(axisBit, true);
-		//		}
-		//	}
-		//}
+	}
+	else
+	{
+		if (m_ui->AF1LineEdit->text().isEmpty() && m_ui->AF1LineEdit->isEnabled())
+			QMetaObject::invokeMethod(m_ui->AF1LineEdit, "setFocus", Qt::QueuedConnection);
 	}
 
-	groupLayout()->addWidget(proxy);
-	statuses = status;
+	m_status = _status;
 }
 
 TaskAFPFaceFace::~TaskAFPFaceFace()
 {
-    delete ui;
+	delete m_ui;
 }
 
-void TaskAFPFaceFace::onUpdate(bool)
+void TaskAFPFaceFace::onUpdate()
 {
-	//bool enable = false;
-	//if (ui->checkOtherBody->isChecked() || ui->checkOtherPart->isChecked())
-	//	enable = true;
+	if (!m_ui->AF1LineEdit->text().isEmpty() && m_ui->AF1LineEdit->isEnabled())
+	{
+		m_ui->AF1GeomComboBox->setEnabled(true);
 
-	//ui->radioDependent->setEnabled(enable);
-	//ui->radioIndependent->setEnabled(enable);
-	//ui->radioXRef->setEnabled(enable);
+		m_ui->AF2LineEdit->setEnabled(false);
+		m_ui->AF2GeomComboBox->setEnabled(false);
+	}
+	else if (!m_ui->AF2LineEdit->text().isEmpty() && m_ui->AF2LineEdit->isEnabled())
+	{
+		m_ui->AF2GeomComboBox->setEnabled(true);
 
-	//updateList();
+		m_ui->AF1LineEdit->setEnabled(false);
+		m_ui->AF1GeomComboBox->setEnabled(false);
+	}
 }
 
-std::vector<App::DocumentObject*> TaskAFPFaceFace::getFeature()
+App::DocumentObject* TaskAFPFaceFace::getFeature()
 {
-	//features.clear();
-	//QListIterator<QListWidgetItem*> i(ui->listWidget->selectedItems());
-	//while (i.hasNext()) {
-
-	//	auto item = i.next();
-	//	if (item->isHidden())
-	//		continue;
-
-	//	QString t = item->data(Qt::UserRole).toString();
-	//	features.push_back(t);
-	//}
-
-	std::vector<App::DocumentObject*> result;
-
-	//for (std::vector<QString>::const_iterator s = features.begin(); s != features.end(); ++s)
-	//	result.push_back(App::GetApplication().getDocument(documentName.c_str())->getObject(s->toLatin1().data()));
+	App::DocumentObject* result = NULL;
+	if (!m_featureStr.isEmpty())
+		result = App::GetApplication().getDocument(m_documentName.c_str())->getObject(m_featureStr.toLatin1().data());
 
 	return result;
 }
 
 
-void TaskAFPFaceFace::onSelectionChanged(const Gui::SelectionChanges& /*msg*/)
+void TaskAFPFaceFace::onSelectionChanged(const Gui::SelectionChanges& _msg)
 {
-	//if (doSelection)
-	//	return;
-	//doSelection = true;
-	//ui->listWidget->clearSelection();
-	//for (Gui::SelectionSingleton::SelObj obj : Gui::Selection().getSelection()) {
-	//	for (int row = 0; row < ui->listWidget->count(); row++) {
-	//		QListWidgetItem *item = ui->listWidget->item(row);
-	//		QString t = item->data(Qt::UserRole).toString();
-	//		if (t.compare(QString::fromLatin1(obj.FeatName)) == 0) {
-	//			item->setSelected(true);
-	//		}
-	//	}
-	//}
-	//doSelection = false;
+	if (_msg.Type == Gui::SelectionChanges::AddSelection) {
+		QString refText = onAddSelection(_msg);
+		if (refText.length() > 0) {
+			if (m_ui->AF1LineEdit->isEnabled())
+			{
+				m_ui->AF1LineEdit->blockSignals(true);
+				m_ui->AF1LineEdit->setText(refText);
+				m_ui->AF1LineEdit->setProperty("FaceName", QByteArray(_msg.pSubName));
+				m_ui->AF1LineEdit->blockSignals(false);
+				// Turn off reference selection mode
+				onFaceSelection(false);
+				onUpdate();
+			}
+			else if (m_ui->AF2LineEdit->isEnabled())
+			{
+				m_ui->AF2LineEdit->blockSignals(true);
+				m_ui->AF2LineEdit->setText(refText);
+				m_ui->AF2LineEdit->setProperty("FaceName", QByteArray(_msg.pSubName));
+				m_ui->AF2LineEdit->blockSignals(false);
+				// Turn off reference selection mode
+				onFaceSelection(false);
+				onUpdate();
+			}
+		}
+		else {
+			if (m_ui->AF1LineEdit->isEnabled())
+			{
+				m_ui->AF1LineEdit->blockSignals(true);
+				m_ui->AF1LineEdit->setText(tr(""));
+				m_ui->AF1LineEdit->setProperty("FaceName", QByteArray());
+				m_ui->AF1LineEdit->blockSignals(false);
+				onUpdate();
+			}
+			else if (m_ui->AF2LineEdit->isEnabled())
+			{
+				m_ui->AF2LineEdit->blockSignals(true);
+				m_ui->AF2LineEdit->setText(tr(""));
+				m_ui->AF2LineEdit->setProperty("FaceName", QByteArray());
+				m_ui->AF2LineEdit->blockSignals(false);
+				onUpdate();
+			}
+		}
+	}
+	else if (_msg.Type == Gui::SelectionChanges::ClrSelection) {
+		if (m_ui->AF1LineEdit->isEnabled())
+		{
+			m_ui->AF1LineEdit->blockSignals(true);
+			m_ui->AF1LineEdit->setText(tr(""));
+			m_ui->AF1LineEdit->setProperty("FaceName", QByteArray());
+			m_ui->AF1LineEdit->blockSignals(false);
+			onUpdate();
+		}
+		else if (m_ui->AF2LineEdit->isEnabled())
+		{
+			m_ui->AF2LineEdit->blockSignals(true);
+			m_ui->AF2LineEdit->setText(tr(""));
+			m_ui->AF2LineEdit->setProperty("FaceName", QByteArray());
+			m_ui->AF2LineEdit->blockSignals(false);
+			onUpdate();
+		}
+	}
 }
 
-void TaskAFPFaceFace::slotUndoDocument(const Gui::Document&)
+const QString TaskAFPFaceFace::onAddSelection(const Gui::SelectionChanges& _msg)
+{
+	App::DocumentObject* selObj = NULL;
+	std::vector<Gui::SelectionObject> selection = Gui::Selection().getSelectionEx();
+	if (!selection.empty())
+		selObj = selection.front().getObject();
+
+	if (selObj == NULL)
+		return QString();
+	std::string subname = _msg.pSubName;
+	QString refStr;
+
+	// Remove subname for planes and datum features
+	if (subname.size() > 4) {
+		int faceId = std::atoi(&subname[4]);
+		refStr = QString::fromLatin1(selObj->getNameInDocument()) + QString::fromLatin1(":") + QObject::tr("Face") + QString::number(faceId);
+	}
+
+	return refStr;
+}
+
+void TaskAFPFaceFace::onFaceSelection(const bool pressed) {
+	try {
+		if (pressed) {
+			auto activeBody = PartDesignGui::getBody(false);
+			if (!activeBody)
+				return;
+
+			auto activePart = PartDesignGui::getPartFor(activeBody, false);
+
+			Gui::Selection().clearSelection();
+			Gui::Selection().addSelectionGate(new ReferenceSelection(activePart, false, true, false));
+		}
+		else
+		{
+			Gui::Selection().rmvSelectionGate();
+		}
+	}
+	catch (const Base::Exception& e) {
+		e.ReportException();
+	}
+}
+
+QString TaskAFPFaceFace::getFaceName(void) const
+{
+	QString faceName = m_ui->AF1LineEdit->property("FaceName").toString();
+	if (!faceName.isEmpty()) {
+		return getFaceReference(m_ui->AF1LineEdit->text(), faceName);
+	}
+	return QString();
+}
+
+QString TaskAFPFaceFace::getFaceReference(const QString& obj, const QString& sub)
+{
+	QString o = obj.left(obj.indexOf(QString::fromLatin1(":")));
+
+	if (o == tr("No face selected"))
+		return QString();
+	else
+		return QString::fromLatin1("(App.activeDocument().") + o + QString::fromLatin1(", [\"") + sub + QString::fromLatin1("\"])");
+}
+
+void TaskAFPFaceFace::slotUndoDocument(const Gui::Document& _Doc)
 {
 	//if (origins.empty()) {
 	//	QTimer::singleShot(100, &Gui::Control(), SLOT(closeDialog()));
 	//}
 }
 
-void TaskAFPFaceFace::slotDeleteDocument(const Gui::Document&)
+void TaskAFPFaceFace::slotDeleteDocument(const Gui::Document& _Doc)
 {
 	//origins.clear();
 	//QTimer::singleShot(100, &Gui::Control(), SLOT(closeDialog()));
+}
+
+void TaskAFPFaceFace::exitSelectionMode()
+{
+	Gui::Selection().rmvSelectionGate();
 }
 
 
@@ -166,14 +285,10 @@ void TaskAFPFaceFace::slotDeleteDocument(const Gui::Document&)
 //**************************************************************************
 // TaskDialog
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-TaskDlgAFPFaceFace::TaskDlgAFPFaceFace(std::vector<App::DocumentObject*> &objects,
-	const std::vector<TaskAFPFaceFace::featureStatus> &status,
-	boost::function<bool(std::vector<App::DocumentObject*>)> afunc) : TaskDialog(), accepted(false)
+TaskDlgAFPFaceFace::TaskDlgAFPFaceFace(App::DocumentObject* _feature, const TaskAFPFaceFace::featureStatus& _status) : TaskDialog(), m_accepted(false)
 {
-	facePick = new TaskAFPFaceFace(objects, status);
-	Content.push_back(facePick);
-
-	acceptFunction = afunc;
+	m_facePick = new TaskAFPFaceFace(_feature, _status);
+	Content.push_back(m_facePick);
 }
 
 TaskDlgAFPFaceFace::~TaskDlgAFPFaceFace()
@@ -197,13 +312,13 @@ void TaskDlgAFPFaceFace::clicked(int)
 
 bool TaskDlgAFPFaceFace::accept()
 {
-	accepted = acceptFunction( facePick->getFeature() );
-	return accepted;
+	m_accepted = true;
+	return true;
 }
 
 bool TaskDlgAFPFaceFace::reject()
 {
-	accepted = false;
+	m_accepted = false;
 	return true;
 }
 
