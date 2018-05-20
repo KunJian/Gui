@@ -24,8 +24,8 @@
 #include "TaskAFPFaceFace.h"
 #include "ui_TaskAFPFaceFace.h"
 
-#include "AFP.h"
-#include "AFPGroup.h"
+#include <Mod/PartDesign/App/AFP/AFP.h>
+#include <Mod/PartDesign/App/AFP/AFPGroup.h>
 
 #include <Mod/Part/App/DatumFeature.h>
 #include <Mod/PartDesign/App/DatumPlane.h>

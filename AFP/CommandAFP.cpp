@@ -15,6 +15,7 @@
 
 #include <App/DocumentObjectGroup.h>
 #include <App/Part.h>
+#include <App/Document.h>
 #include <Gui/Application.h>
 #include <Gui/Command.h>
 #include <Gui/Control.h>
@@ -28,10 +29,11 @@
 
 #include <Mod/PartDesign/App/Body.h>
 #include <Mod/PartDesign/App/Feature.h>
+#include <Mod/PartDesign/App/AFP/AFP.h>
+#include <Mod/PartDesign/App/AFP/AFPGroup.h>
 
 #include "TaskAFPFaceFace.h"
-#include "AFP.h"
-#include "AFPGroup.h"
+
 #include "ViewProviderAFP.h"
 
 #include "../ReferenceSelection.h"
@@ -45,7 +47,7 @@ using namespace std;
 // Helper methods ===========================================================
 namespace PartDesignGui
 {
-	PartDesign::AFPGroup* getAFPGroup(App::Part* _AFPPart)
+	PartDesign::AFPGroup* getPartAFPGroup(App::Part* _AFPPart)
 	{
 		PartDesign::AFPGroup* AFPGrp = 0;
 		std::vector<App::DocumentObject*> partObjs = _AFPPart->getObjects();
@@ -56,34 +58,56 @@ namespace PartDesignGui
 				break;
 			}
 		}
-
 		return AFPGrp;
 	}
 
-	bool getAFPPrerequisits(App::Part** _AFPPart, PartDesign::AFPGroup** AFPGrp)
+	PartDesign::AFPGroup* getDocAFPGroup(App::Document* _AFPDoc)
+	{
+		PartDesign::AFPGroup* AFPGrp = 0;
+		std::vector<App::DocumentObject*> partObjs = _AFPDoc->getObjects();
+
+		for (std::vector<App::DocumentObject*>::const_iterator it = partObjs.begin(); it != partObjs.end(); ++it) {
+			if ((*it)->getTypeId().isDerivedFrom(PartDesign::AFPGroup::getClassTypeId())) {
+				AFPGrp = static_cast<PartDesign::AFPGroup*>(*it);
+				break;
+			}
+		}
+		return AFPGrp;
+	}
+
+	bool getAFPPrerequisits(App::Part** _AFPPart, App::Document** _AFPDoc, PartDesign::AFPGroup** AFPGrp)
 	{
 		*_AFPPart = PartDesignGui::getActivePart();
+		if (*_AFPPart)
+		{
+			// find the AFP group of the active PartDesign
+			*AFPGrp = getPartAFPGroup(*_AFPPart);
+			if (!*AFPGrp) { // if it hasen't aleardy one, create one:
+				Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().addObject('PartDesign::AFPGroup','AFPGroup')");
+				Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().ActiveObject.Label = 'AFPGroup'");
+				Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.Annotations = App.activeDocument().%s.Annotations + [App.activeDocument().ActiveObject]",
+					(*_AFPPart)->getNameInDocument(), (*_AFPPart)->getNameInDocument());
+			}
+			*AFPGrp = getPartAFPGroup(*_AFPPart); // find now
+
+			if (*AFPGrp) return true;
+		}
 
 		// find the AFP group of the active PartDesign
-		*AFPGrp = getAFPGroup(*_AFPPart);
-
-		// if it hasen't aleardy one, create one:
-		if (!*AFPGrp) {
+		*AFPGrp = getDocAFPGroup(*_AFPDoc);
+		if (!*AFPGrp) { // if it hasen't aleardy one, create one:
 			Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().addObject('PartDesign::AFPGroup','AFPGroup')");
 			Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().ActiveObject.Label = 'AFPGroup'");
 			Gui::Command::doCommand(Gui::Command::Doc, "App.activeDocument().%s.Annotations = App.activeDocument().%s.Annotations + [App.activeDocument().ActiveObject]",
-				(*_AFPPart)->getNameInDocument(), (*_AFPPart)->getNameInDocument());
+				(*_AFPDoc)->getName(), (*_AFPDoc)->getName());
 		}
-
-		// find now
-		*AFPGrp = getAFPGroup(*_AFPPart);
+		*AFPGrp = getDocAFPGroup(*_AFPDoc); // find now
 
 		if (!*AFPGrp)
 			throw Base::Exception("Could not create PartDesign::AFPGroup in active PartDesign");
 
 		// return with no error
 		return false;
-
 	}
 
 	std::string asSubLinkString(Part::Feature* _feat, std::string _element)
@@ -156,18 +180,18 @@ void CmdPartDesignAFPFaceFace::activated(int iMsg)
 	PartDesign::AFPGroup* AFPGrp = 0;
 
 	// retrive the standard objects needed
-	if (PartDesignGui::getAFPPrerequisits(&AFPPart, &AFPGrp))
-		return ;
+	if (PartDesignGui::getAFPPrerequisits(&AFPPart, &appDoc, &AFPGrp))
+		return;
 
 	std::vector<Gui::SelectionObject> objs = Gui::Selection().getSelectionEx();
 	if (objs.size() != 1) {
 		QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"), QObject::tr("Only one geometries supported by AFPs"));
-		return ;
+		return;
 	};
 
 	App::DocumentObject* obj = objs.front().getObject();
 	if (obj == NULL || !obj->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId()))
-		return ;
+		return;
 
 	Part::Feature* selFeat = dynamic_cast<PartDesign::Feature*>(obj);
 	if (selFeat == NULL)

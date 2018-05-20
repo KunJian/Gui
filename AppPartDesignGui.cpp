@@ -61,6 +61,8 @@
 #include "ViewProviderPipe.h"
 #include "ViewProviderLoft.h"
 #include "ViewProviderShapeBinder.h"
+#include "AFP/ViewProviderAFP.h"
+#include "AFP/ViewProviderAFPGroup.h"
 
 // use a different name to CreateCommand()
 void CreatePartDesignCommands(void);
@@ -154,6 +156,9 @@ PyMOD_INIT_FUNC(PartDesignGui)
 	PartDesignGui::ViewProviderPrimitive::init();
 	PartDesignGui::ViewProviderPipe::init();
 	PartDesignGui::ViewProviderLoft::init();
+
+	PartDesignGui::ViewProviderAFP::init();
+	PartDesignGui::ViewProviderAFPGroup::init();
 
 	// add resources and reloads the translators
 	loadPartDesignResource();

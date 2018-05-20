@@ -19,8 +19,6 @@
  *   Suite 330, Boston, MA  02111-1307, USA                                *
  *                                                                         *
  ***************************************************************************/
-
-
 #ifndef PARTDESIGNGUI_VIEWPROVIDERAFP_H
 #define PARTDESIGNGUI_VIEWPROVIDERAFP_H
 
@@ -29,13 +27,12 @@
 #include <Gui/Selection.h>
 #include <Inventor/nodes/SoAnnotation.h>
 #include <App/GeoFeature.h>
-#include "AFP.h"
+#include <Mod/PartDesign/App/AFP/AFP.h>
 
 namespace PartDesignGui
 {
 	//class for internal use to alllow access to protected functions of view provider part.
 	class PartDesignGuiExport ViewProviderAFPInternal : public PartGui::ViewProviderPart {
-
 		PROPERTY_HEADER(PartDesignGui::ViewProviderAFPInternal);
 
 	public:
@@ -56,11 +53,9 @@ namespace PartDesignGui
 		void switch_node(bool onoff);
 	};
 
-
 	//this class adds highlight functionality to the AFP: when a AFP is selected
 	//in the tree all used geometries are shown
 	class PartDesignGuiExport ViewProviderAFP : public PartGui::ViewProviderPart, public Gui::SelectionObserver  {
-
 		PROPERTY_HEADER(PartDesignGui::ViewProviderAFP);
 
 	public:

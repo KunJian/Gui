@@ -19,8 +19,6 @@
  *   Suite 330, Boston, MA  02111-1307, USA                                *
  *                                                                         *
  ***************************************************************************/
-
-
 #include "../PreCompiled.h"
 
 #ifndef _PreComp_
@@ -31,7 +29,7 @@
 #include <Gui/Command.h>
 #include <Gui/Document.h>
 
-#include "AFPGroup.h"
+#include <Mod/PartDesign/App/AFP/AFPGroup.h>
 
 using namespace PartDesignGui;
 
@@ -83,13 +81,11 @@ std::vector<std::string> ViewProviderAFPGroup::getDisplayModes(void) const
 std::vector<App::DocumentObject*> ViewProviderAFPGroup::claimChildren(void)const
 {
 	std::vector<App::DocumentObject*> temp(static_cast<PartDesign::AFPGroup*>(getObject())->m_AFPs.getValues());
-
 	return temp;
 }
 
 std::vector<App::DocumentObject*> ViewProviderAFPGroup::claimChildren3D(void)const
 {
-
 	//return static_cast<PartDesign::AFPGroup*>(getObject())->m_AFPs.getValues();
 	return std::vector<App::DocumentObject*>();
 }

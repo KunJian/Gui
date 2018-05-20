@@ -19,11 +19,10 @@
  *   Suite 330, Boston, MA  02111-1307, USA                                *
  *                                                                         *
  ***************************************************************************/
-
 #include "../PreCompiled.h"
 #include "ViewProviderAFP.h"
 #include "TaskAFPFaceFace.h"
-#include "AFP.h"
+#include <Mod/PartDesign/App/AFP/AFP.h>
 #include <Mod/Part/App/PartFeature.h>
 #include <Base/Console.h>
 #include <App/Application.h>
@@ -42,7 +41,6 @@
 using namespace PartDesignGui;
 
 PROPERTY_SOURCE(PartDesignGui::ViewProviderAFPInternal, PartGui::ViewProviderPart)
-
 ViewProviderAFPInternal::ViewProviderAFPInternal()
 {
     //AFP entiti color
@@ -78,7 +76,6 @@ ViewProviderAFPInternal::ViewProviderAFPInternal()
     PointSize.setValue(lwidth);
 
     Transparency.setValue(50);
-    
 };
 
 void ViewProviderAFPInternal::updateVis(const TopoDS_Shape& shape)
@@ -111,7 +108,6 @@ void ViewProviderAFPInternal::switch_node(bool onoff)
 void ViewProviderAFP::setDisplayMode(const char* ModeName)
 {
     setDisplayMaskMode("Flat Lines");
-
 }
 
 std::vector<std::string> ViewProviderAFP::getDisplayModes(void) const
@@ -123,9 +119,7 @@ std::vector<std::string> ViewProviderAFP::getDisplayModes(void) const
     return StrList;
 }
 
-
 PROPERTY_SOURCE(PartDesignGui::ViewProviderAFP, PartGui::ViewProviderPart)
-
 ViewProviderAFP::ViewProviderAFP() : m_selected(false)
 {
     Selectable.setValue(false);
@@ -143,7 +137,6 @@ ViewProviderAFP::ViewProviderAFP() : m_selected(false)
     r2 = ((ccol >> 24) & 0xff) / 255.0;
     g2 = ((ccol >> 16) & 0xff) / 255.0;
     b2 = ((ccol >> 8) & 0xff) / 255.0;
-
 
     int lwidth = hGrp->GetInt("DefaultShapeLineWidth", 2) + 1;
     App::Material mat;
@@ -169,7 +162,6 @@ bool ViewProviderAFP::isShow() const
 {
     return Visibility.getValue();
 }
-
 
 void ViewProviderAFP::attach(App::DocumentObject* pcFeat)
 {
@@ -199,28 +191,19 @@ void ViewProviderAFP::update(const App::Property* prop) {
     ViewProviderPart::update(prop);
 }
 
-
 void ViewProviderAFP::updateData(const App::Property* prop) {
   
     //set the icon
 	int v = dynamic_cast<PartDesign::AFP*>(getObject())->m_type.getValue();
-    if(v == 4)
-      sPixmap = "constraints/Assembly_ConstraintAlignment";
-    if(v == 3)
-      sPixmap = "constraints/Assembly_ConstraintAngle";
-    if(v == 5)
-      sPixmap = "constraints/Assembly_ConstraintCoincidence";
-    if(v == 1)
-      sPixmap = "constraints/Assembly_ConstraintDistance";
-    if(v == 0)
-      sPixmap = "constraints/Assembly_ConstraintLock";
-    if(v == 2)
-      sPixmap = "constraints/Assembly_ConstraintOrientation";
-    if(v==6)
-      sPixmap = "constraints/Assembly_ConstraintGeneral";
+    if(v == 4) sPixmap = "constraints/Assembly_ConstraintAlignment";
+    if(v == 3) sPixmap = "constraints/Assembly_ConstraintAngle";
+    if(v == 5) sPixmap = "constraints/Assembly_ConstraintCoincidence";
+    if(v == 1) sPixmap = "constraints/Assembly_ConstraintDistance";
+    if(v == 0) sPixmap = "constraints/Assembly_ConstraintLock";
+    if(v == 2) sPixmap = "constraints/Assembly_ConstraintOrientation";
+    if(v == 6) sPixmap = "constraints/Assembly_ConstraintGeneral";
     
     if(Visibility.getValue() && m_selected) {
-
         draw();
     }
 
@@ -250,7 +233,6 @@ void ViewProviderAFP::onChanged(const App::Property* prop)
 
 void ViewProviderAFP::draw()
 {
-
     TopoDS_Shape s1 = getAFPShape(1);
     updateVisual(s1);
 
@@ -258,9 +240,7 @@ void ViewProviderAFP::draw()
     internal_vp.updateVis(s2);
 
 	App::DocumentObject* obj1 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_first.getValue();
-
-    if(!obj1)
-        return;
+    if(!obj1) return;
 
     //the internal draw algorithm removes all locations. but we have this subshape extracted
     //from a complex one, therefore it's translation is not respected in the parts rotation
@@ -285,9 +265,7 @@ void ViewProviderAFP::draw()
     //Second part
     //***********
 	App::DocumentObject* obj2 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_second.getValue();
-
-    if(!obj2)
-        return;
+    if(!obj2) return;
 
     //the internal draw algorithm removes all locations. but we have this subshape extracted
     //from a complex one, therefore it's shape internal translation is not respected in the parts rotation
@@ -303,7 +281,6 @@ void ViewProviderAFP::draw()
 }
 
 void ViewProviderAFP::upstream_placement(Base::Placement& p, App::GeoFeature* _feat) {
-
     //successive transformation for this item
 	p = _feat->Placement.getValue() * p;
 
@@ -335,46 +312,36 @@ void ViewProviderAFP::onSelectionChanged(const Gui::SelectionChanges& msg)
     }
 }
 
-
 TopoDS_Shape ViewProviderAFP::getAFPShape(int link)
 {
-
     if(link == 1) {
         //subshape of first link
         //**********************
         App::DocumentObject* obj1 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_first.getValue();
-
-        if(!obj1)
-            return TopoDS_Shape();
+        if(!obj1) return TopoDS_Shape();
 
         Part::TopoShape ts;
    		if (obj1->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId())) {
 			ts = static_cast<Part::Feature*>(obj1)->Shape.getShape();
         }
-        else
-            return TopoDS_Shape();
+        else return TopoDS_Shape();
 
         TopoDS_Shape s1 = ts.getSubShape(dynamic_cast<PartDesign::AFP*>(pcObject)->m_first.getSubValues()[0].c_str());
-
         return s1;
     }
     else {
         //subshape of second link
         //**********************
 		App::DocumentObject* obj2 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_second.getValue();
-
-        if(!obj2)
-            return TopoDS_Shape();
+        if(!obj2) return TopoDS_Shape();
 
         Part::TopoShape ts2;
 		if (obj2->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId())) {
 			ts2 = static_cast<Part::Feature*>(obj2)->Shape.getShape();
         }
-        else
-            return TopoDS_Shape();
+        else return TopoDS_Shape();
 
 		TopoDS_Shape s2 = ts2.getSubShape(dynamic_cast<PartDesign::AFP*>(pcObject)->m_second.getSubValues()[0].c_str());
-
         return s2;
     };
 	return TopoDS_Shape();
@@ -418,10 +385,8 @@ bool ViewProviderAFP::setEdit(int ModNum)
 		else return false;
 	}
 
-	if (dlg)
-		Gui::Control().showDialog(dlg);
-	else
-		Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(this));
+	if (dlg) Gui::Control().showDialog(dlg);
+	else Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(this));
 
 	//show the AFP geometries
 	internal_vp.switch_node(true);
@@ -439,4 +404,3 @@ void ViewProviderAFP::unsetEdit(int ModNum)
         m_selected = false;
     }
 }
-
