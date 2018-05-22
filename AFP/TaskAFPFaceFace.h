@@ -24,36 +24,20 @@ namespace PartDesignGui
 		Q_OBJECT
 
 	public:
-		// 添加枚举变量，用于标识特征的状态，2018-05-12，xzj
-		enum featureStatus {
-			validFeature = 0,
-			invalidShape,
-			otherBody,
-			otherPart,
-			notInBody,
-			AFPFace,
-			afterTip
-		};
-
-		TaskAFPFaceFace(ViewProviderAFP* _vp, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
+		TaskAFPFaceFace(PartDesign::AFP* _AFP, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
 		~TaskAFPFaceFace();
-
-		App::DocumentObject* getFeature();
 
 	protected Q_SLOTS:
 		void onUpdate();
+		void onUpdateAFGeom(const int _idx);
 		void onSelectionChanged(const Gui::SelectionChanges& _msg);
 		void onFaceSelection(const bool pressed = true);
-
 		void onConstraintSelection(QComboBox* const _combBox);
 
 	protected:
 		const QString onAddSelection(const Gui::SelectionChanges& _msg, App::DocumentObject* _selObj, QString& _AFPText);
 		void setLineEdit(QLineEdit* const _lnEdit, const QString _refText, const char* _subName, bool _onFaceSel, bool _faceSel);
 		void exitSelectionMode();
-
-		QString getFaceName(void) const;
-		static QString getFaceReference(const QString& obj, const QString& sub);
 
 		/** Notifies on undo */
 		virtual void slotUndoDocument(const Gui::Document& _Doc);
@@ -63,12 +47,10 @@ namespace PartDesignGui
 	private:
 		Ui_TaskAFPFaceFace* m_ui;
 		QWidget*            m_proxy;
-		ViewProviderAFP*    m_view;
+		PartDesign::AFP*    m_AFP;
 
 		std::string   m_documentName;
 		QString       m_featureStr;
-
-		const QString getFeatureStatusString(const featureStatus _st);
 	};
 
 	/// simulation dialog for the TaskView
@@ -77,7 +59,7 @@ namespace PartDesignGui
 		Q_OBJECT
 
 	public:
-		TaskDlgAFPFaceFace(ViewProviderAFP* _vp);
+		TaskDlgAFPFaceFace(PartDesign::AFP* _AFP);
 		~TaskDlgAFPFaceFace();
 
 	public:
@@ -102,7 +84,8 @@ namespace PartDesignGui
 
 	protected:
 		TaskAFPFaceFace* m_facePick;
-		ViewProviderAFP* m_view;
+		PartDesign::AFP* m_AFP;
+		//ViewProviderAFP* m_view;
 	};
 }
 

@@ -80,12 +80,12 @@ std::vector<std::string> ViewProviderAFPGroup::getDisplayModes(void) const
 
 std::vector<App::DocumentObject*> ViewProviderAFPGroup::claimChildren(void)const
 {
-	std::vector<App::DocumentObject*> temp(static_cast<PartDesign::AFPGroup*>(getObject())->m_AFPs.getValues());
+	std::vector<App::DocumentObject*> temp(static_cast<PartDesign::AFPGroup*>(getObject())->AFPs.getValues());
 	return temp;
 }
 
 std::vector<App::DocumentObject*> ViewProviderAFPGroup::claimChildren3D(void)const
 {
-	//return static_cast<PartDesign::AFPGroup*>(getObject())->m_AFPs.getValues();
+	//return static_cast<PartDesign::AFPGroup*>(getObject())->AFPs.getValues();
 	return std::vector<App::DocumentObject*>();
 }

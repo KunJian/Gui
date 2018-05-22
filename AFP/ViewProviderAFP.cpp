@@ -194,7 +194,7 @@ void ViewProviderAFP::update(const App::Property* prop) {
 void ViewProviderAFP::updateData(const App::Property* prop) {
   
     //set the icon
-	int v = dynamic_cast<PartDesign::AFP*>(getObject())->m_type.getValue();
+	int v = dynamic_cast<PartDesign::AFP*>(getObject())->Type.getValue();
     if(v == 4) sPixmap = "constraints/Assembly_ConstraintAlignment";
     if(v == 3) sPixmap = "constraints/Assembly_ConstraintAngle";
     if(v == 5) sPixmap = "constraints/Assembly_ConstraintCoincidence";
@@ -239,7 +239,7 @@ void ViewProviderAFP::draw()
     TopoDS_Shape s2 = getAFPShape(2);
     internal_vp.updateVis(s2);
 
-	App::DocumentObject* obj1 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_first.getValue();
+	App::DocumentObject* obj1 = dynamic_cast<PartDesign::AFP*>(pcObject)->First.getValue();
     if(!obj1) return;
 
     //the internal draw algorithm removes all locations. but we have this subshape extracted
@@ -264,7 +264,7 @@ void ViewProviderAFP::draw()
 
     //Second part
     //***********
-	App::DocumentObject* obj2 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_second.getValue();
+	App::DocumentObject* obj2 = dynamic_cast<PartDesign::AFP*>(pcObject)->Second.getValue();
     if(!obj2) return;
 
     //the internal draw algorithm removes all locations. but we have this subshape extracted
@@ -317,7 +317,7 @@ TopoDS_Shape ViewProviderAFP::getAFPShape(int link)
     if(link == 1) {
         //subshape of first link
         //**********************
-        App::DocumentObject* obj1 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_first.getValue();
+        App::DocumentObject* obj1 = dynamic_cast<PartDesign::AFP*>(pcObject)->First.getValue();
         if(!obj1) return TopoDS_Shape();
 
         Part::TopoShape ts;
@@ -326,13 +326,13 @@ TopoDS_Shape ViewProviderAFP::getAFPShape(int link)
         }
         else return TopoDS_Shape();
 
-        TopoDS_Shape s1 = ts.getSubShape(dynamic_cast<PartDesign::AFP*>(pcObject)->m_first.getSubValues()[0].c_str());
+        TopoDS_Shape s1 = ts.getSubShape(dynamic_cast<PartDesign::AFP*>(pcObject)->First.getSubValues()[0].c_str());
         return s1;
     }
     else {
         //subshape of second link
         //**********************
-		App::DocumentObject* obj2 = dynamic_cast<PartDesign::AFP*>(pcObject)->m_second.getValue();
+		App::DocumentObject* obj2 = dynamic_cast<PartDesign::AFP*>(pcObject)->Second.getValue();
         if(!obj2) return TopoDS_Shape();
 
         Part::TopoShape ts2;
@@ -341,7 +341,7 @@ TopoDS_Shape ViewProviderAFP::getAFPShape(int link)
         }
         else return TopoDS_Shape();
 
-		TopoDS_Shape s2 = ts2.getSubShape(dynamic_cast<PartDesign::AFP*>(pcObject)->m_second.getSubValues()[0].c_str());
+		TopoDS_Shape s2 = ts2.getSubShape(dynamic_cast<PartDesign::AFP*>(pcObject)->Second.getSubValues()[0].c_str());
         return s2;
     };
 	return TopoDS_Shape();
@@ -361,10 +361,8 @@ bool ViewProviderAFP::setEdit(int ModNum)
     //TaskDlgAssemblyConstraints* ConstraintsDlg = qobject_cast<TaskDlgAssemblyConstraints*>(dlg);
 
     //// start the edit dialog
-    //if(ConstraintsDlg)
-    //    Gui::Control().showDialog(ConstraintsDlg);
-    //else
-    //    Gui::Control().showDialog(new TaskDlgAssemblyConstraints(this));
+    //if(ConstraintsDlg) Gui::Control().showDialog(ConstraintsDlg);
+    //else Gui::Control().showDialog(new TaskDlgAssemblyConstraints(this));
 
     ////show the AFP geometries
     //internal_vp.switch_node(true);
@@ -372,28 +370,29 @@ bool ViewProviderAFP::setEdit(int ModNum)
     //draw();
 
 	// Show dialog and let user pick plane
-	Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
-	PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
-	if (dlg && !facePick) {
-		QMessageBox msgBox;
-		msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
-		msgBox.setInformativeText(QObject::tr("Do you want to close this dialog?"));
-		msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-		msgBox.setDefaultButton(QMessageBox::Yes);
-		int ret = msgBox.exec();
-		if (ret == QMessageBox::Yes) Gui::Control().closeDialog();
-		else return false;
-	}
+	//Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
+	//PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
+	//if (dlg && !facePick) {
+	//	QMessageBox msgBox;
+	//	msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
+	//	msgBox.setInformativeText(QObject::tr("Do you want to close this dialog?"));
+	//	msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+	//	msgBox.setDefaultButton(QMessageBox::Yes);
+	//	int ret = msgBox.exec();
+	//	if (ret == QMessageBox::Yes) Gui::Control().closeDialog();
+	//	else return false;
+	//}
 
-	if (dlg) Gui::Control().showDialog(dlg);
-	else Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(this));
+	//if (dlg) Gui::Control().showDialog(dlg);
+	//else Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(this));
 
-	//show the AFP geometries
-	internal_vp.switch_node(true);
-	pcModeSwitch->whichChild = 0;
-	draw();
+	////show the AFP geometries
+	//internal_vp.switch_node(true);
+	//pcModeSwitch->whichChild = 0;
+	//draw();
 
-    return true;
+ //   return true;
+	return false;
 }
 
 void ViewProviderAFP::unsetEdit(int ModNum)
