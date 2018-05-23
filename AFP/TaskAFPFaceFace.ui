@@ -246,7 +246,12 @@
             </property>
             <item>
              <property name="text">
-              <string>Contact</string>
+              <string>Distance</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Align</string>
              </property>
             </item>
             <item>
@@ -256,12 +261,7 @@
             </item>
             <item>
              <property name="text">
-              <string>Distance</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Offset</string>
+              <string>Orientation</string>
              </property>
             </item>
             <item>

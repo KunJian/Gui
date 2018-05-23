@@ -24,19 +24,23 @@ namespace PartDesignGui
 		Q_OBJECT
 
 	public:
-		TaskAFPFaceFace(PartDesign::AFP* _AFP, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
+		//TaskAFPFaceFace(PartDesign::AFP* _AFP, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
+		TaskAFPFaceFace(ViewProviderAFP* _vp, QWidget* _parent = 0); //增加特征状态参数，2018-05-12，xzj
 		~TaskAFPFaceFace();
 
-	protected Q_SLOTS:
-		void onUpdate();
-		void onUpdateAFGeom(const int _idx);
+		protected Q_SLOTS:
+		void onUpdate(const QString& _lineText);
+		void onUpdateAFGeom(const int _idx, QComboBox* _combBox);
 		void onSelectionChanged(const Gui::SelectionChanges& _msg);
-		void onFaceSelection(const bool pressed = true);
-		void onConstraintSelection(QComboBox* const _combBox);
+		void onFaceSelection(bool _pressed);
+		void onConstraintSelection(const QString& _selText);
+
+	public:
+		bool eventFilter(QObject* _watched, QEvent* _event);    //注意這裡
 
 	protected:
 		const QString onAddSelection(const Gui::SelectionChanges& _msg, App::DocumentObject* _selObj, QString& _AFPText);
-		void setLineEdit(QLineEdit* const _lnEdit, const QString _refText, const char* _subName, bool _onFaceSel, bool _faceSel);
+		void setLineEdit(QLineEdit* const _lnEdit, const QString _refText, const char* _subName);
 		void exitSelectionMode();
 
 		/** Notifies on undo */
@@ -48,9 +52,13 @@ namespace PartDesignGui
 		Ui_TaskAFPFaceFace* m_ui;
 		QWidget*            m_proxy;
 		PartDesign::AFP*    m_AFP;
+		ViewProviderAFP*    m_vp;
 
-		std::string   m_documentName;
-		QString       m_featureStr;
+		bool                m_AF1HasFocus;
+		bool                m_AF2HasFocus;
+
+		std::string         m_documentName;
+		QString             m_featureStr;
 	};
 
 	/// simulation dialog for the TaskView
@@ -59,7 +67,8 @@ namespace PartDesignGui
 		Q_OBJECT
 
 	public:
-		TaskDlgAFPFaceFace(PartDesign::AFP* _AFP);
+		//TaskDlgAFPFaceFace(PartDesign::AFP* _AFP);
+		TaskDlgAFPFaceFace(ViewProviderAFP* _vp);
 		~TaskDlgAFPFaceFace();
 
 	public:
@@ -85,7 +94,7 @@ namespace PartDesignGui
 	protected:
 		TaskAFPFaceFace* m_facePick;
 		PartDesign::AFP* m_AFP;
-		//ViewProviderAFP* m_view;
+		ViewProviderAFP* m_vp;
 	};
 }
 

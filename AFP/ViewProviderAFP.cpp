@@ -370,29 +370,29 @@ bool ViewProviderAFP::setEdit(int ModNum)
     //draw();
 
 	// Show dialog and let user pick plane
-	//Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
-	//PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
-	//if (dlg && !facePick) {
-	//	QMessageBox msgBox;
-	//	msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
-	//	msgBox.setInformativeText(QObject::tr("Do you want to close this dialog?"));
-	//	msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-	//	msgBox.setDefaultButton(QMessageBox::Yes);
-	//	int ret = msgBox.exec();
-	//	if (ret == QMessageBox::Yes) Gui::Control().closeDialog();
-	//	else return false;
-	//}
+	Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
+	PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
+	if (dlg && !facePick) {
+		QMessageBox msgBox;
+		msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
+		msgBox.setInformativeText(QObject::tr("Do you want to close this dialog?"));
+		msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+		msgBox.setDefaultButton(QMessageBox::Yes);
+		int ret = msgBox.exec();
+		if (ret == QMessageBox::Yes) Gui::Control().closeDialog();
+		else return false;
+	}
 
-	//if (dlg) Gui::Control().showDialog(dlg);
-	//else Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(this));
+	if (dlg) Gui::Control().showDialog(dlg);
+	else Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(this));
 
-	////show the AFP geometries
+	//show the AFP geometries
 	//internal_vp.switch_node(true);
 	//pcModeSwitch->whichChild = 0;
 	//draw();
 
- //   return true;
-	return false;
+    return true;
+	//return false;
 }
 
 void ViewProviderAFP::unsetEdit(int ModNum)
