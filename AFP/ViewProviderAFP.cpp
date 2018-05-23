@@ -354,24 +354,12 @@ void ViewProviderAFP::setupContextMenu(QMenu* menu, QObject* receiver, const cha
 
 bool ViewProviderAFP::setEdit(int ModNum)
 {
-    //// When double-clicking on the item for this sketch the
-    //// object unsets and sets its edit mode without closing
-    //// the task panel
-    //Gui::TaskView::TaskDialog* dlg = Gui::Control().activeDialog();
-    //TaskDlgAssemblyConstraints* ConstraintsDlg = qobject_cast<TaskDlgAssemblyConstraints*>(dlg);
-
-    //// start the edit dialog
-    //if(ConstraintsDlg) Gui::Control().showDialog(ConstraintsDlg);
-    //else Gui::Control().showDialog(new TaskDlgAssemblyConstraints(this));
-
-    ////show the AFP geometries
-    //internal_vp.switch_node(true);
-    //pcModeSwitch->whichChild = 0;
-    //draw();
-
 	// Show dialog and let user pick plane
 	Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
 	PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
+	if (dlg && facePick->viewProvider() != this) {
+		dlg = 0; // another feature left open its task panel
+	}
 	if (dlg && !facePick) {
 		QMessageBox msgBox;
 		msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
@@ -386,13 +374,7 @@ bool ViewProviderAFP::setEdit(int ModNum)
 	if (dlg) Gui::Control().showDialog(dlg);
 	else Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(this));
 
-	//show the AFP geometries
-	//internal_vp.switch_node(true);
-	//pcModeSwitch->whichChild = 0;
-	//draw();
-
     return true;
-	//return false;
 }
 
 void ViewProviderAFP::unsetEdit(int ModNum)

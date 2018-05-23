@@ -163,40 +163,19 @@ void CmdPartDesignAFPFaceFace::activated(int iMsg)
 	App::Document* appDoc = getDocument();
 	if (!PartDesignGui::assureModernWorkflow(appDoc)) return;
 
-	//// Show dialog and let user pick plane
-	//Gui::TaskView::TaskDialog *dlg = Gui::Control().activeDialog();
-	//PartDesignGui::TaskDlgAFPFaceFace* facePick = qobject_cast<PartDesignGui::TaskDlgAFPFaceFace *>(dlg);
-	//if (dlg && !facePick) {
-	//	QMessageBox msgBox;
-	//	msgBox.setText(QObject::tr("A dialog is already open in the task panel"));
-	//	msgBox.setInformativeText(QObject::tr("Do you want to close this dialog?"));
-	//	msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-	//	msgBox.setDefaultButton(QMessageBox::Yes);
-
-	//	int ret = msgBox.exec();
-	//	if (ret == QMessageBox::Yes) Gui::Control().closeDialog();
-	//	else return;
-	//}
-
-	//if (dlg) Gui::Control().closeDialog();
-
-	//Gui::Selection().clearSelection();
-
 	App::Part* AFPPart = 0;
 	PartDesign::AFPGroup* AFPGrp = 0;
 	if (PartDesignGui::getAFPGroupPrerequisits(&AFPPart, &appDoc, &AFPGrp))
 		return;
 
-	//int AFPCount = AFPGrp->AFPs.getValues().size();
 	PartDesign::AFP* AFPObj = 0;
-	if (PartDesignGui::getAFPPrerequisits(&AFPGrp, &AFPObj/*, AFPCount*/))
+	if (PartDesignGui::getAFPPrerequisits(&AFPGrp, &AFPObj))
 		return;
 
 	std::string id = std::to_string(AFPGrp->AFPs.getValues().size() - 1);
 	AFPObj->ID.setValue(id);
 
 	doCommand(Gui::Command::Gui, "Gui.activeDocument().setEdit('%s')", AFPObj->getNameInDocument());
-	//Gui::Control().showDialog(new PartDesignGui::TaskDlgAFPFaceFace(AFPObj));
 }
 
 bool CmdPartDesignAFPFaceFace::isActive(void)

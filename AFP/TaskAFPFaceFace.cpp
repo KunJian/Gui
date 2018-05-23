@@ -45,8 +45,11 @@ TaskAFPFaceFace::TaskAFPFaceFace(ViewProviderAFP* _vp, QWidget* _parent)
 	, m_AF1HasFocus(false)
 	, m_AF2HasFocus(false)
 {
-	if (_vp->getObject())
-		m_AFP = dynamic_cast<PartDesign::AFP*>(_vp->getObject());
+	if (_vp->getObject()) m_AFP = dynamic_cast<PartDesign::AFP*>(_vp->getObject());
+
+	Gui::Document* doc = _vp->getDocument();
+	this->attachDocument(doc);
+	this->enableNotifications(DocumentObserver::Delete);
 
 	m_proxy = new QWidget(this);
 	m_ui->setupUi(m_proxy);
@@ -61,9 +64,7 @@ TaskAFPFaceFace::TaskAFPFaceFace(ViewProviderAFP* _vp, QWidget* _parent)
 	m_ui->AF1LineEdit->installEventFilter(this);
 	m_ui->AF2LineEdit->installEventFilter(this);
 
-	//connect(m_ui->AF1LineEdit, SIGNAL(focusInEvent(QFocusEvent*)), this, SLOT(onFaceSelection(QFocusEvent*)));
 	connect(m_ui->AF1LineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(onUpdate(const QString&)));
-	//connect(m_ui->AF2LineEdit, SIGNAL(focusInEvent(QFocusEvent*)), this, SLOT(onFaceSelection(QFocusEvent*)));
 	connect(m_ui->AF2LineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(onUpdate(const QString&)));
 	connect(m_ui->constraintTypeComboBox, SIGNAL(activated(const QString &)), this, SLOT(onConstraintSelection(const QString&)));
 
@@ -81,14 +82,6 @@ TaskAFPFaceFace::TaskAFPFaceFace(ViewProviderAFP* _vp, QWidget* _parent)
 
 			if (faceId >= 0)
 				m_ui->AF1LineEdit->setText(QString::fromLatin1(feature->getNameInDocument()) + QString::fromLatin1(":") + tr("Face") + QString::number(faceId));
-			
-			//bool attached = false;
-			//App::Document* pDoc = feature->getDocument();
-			//m_documentName = pDoc->getName();
-			//if (!attached) {
-			//	attached = true;
-			//	attachDocument(Gui::Application::Instance->getDocument(pDoc));
-			//}
 		}
 		else
 			QMetaObject::invokeMethod(m_ui->AF1LineEdit, "setFocus", Qt::QueuedConnection);
@@ -115,7 +108,7 @@ void TaskAFPFaceFace::onUpdate(const QString& _lineText)
 			m_ui->AF2GeomComboBox->setEnabled(true);
 		}
 	}
-	else 
+	else
 	{
 		if (lineEdit == m_ui->AF1LineEdit)
 		{
@@ -150,13 +143,13 @@ void TaskAFPFaceFace::onUpdateAFGeom(const int _idx, QComboBox* _combBox)
 	{
 	case GeomAbs_Plane:
 	{
-		_combBox->setItemText(0, QObject::tr("Plane"));
+		_combBox->setCurrentIndex(0);
 		_combBox->setEnabled(false);
 		break;
 	}
 	case GeomAbs_Cylinder:
 	{
-		_combBox->setItemText(0, QObject::tr("Cylinder"));
+		_combBox->setCurrentIndex(1);
 		_combBox->setEnabled(false);
 		break;
 	}
@@ -176,23 +169,25 @@ void TaskAFPFaceFace::onSelectionChanged(const Gui::SelectionChanges& _msg)
 		if (!selection.empty())
 			selObj = selection.front().getObject();
 		if (selObj == NULL || !selObj->getTypeId().isDerivedFrom(Part::Feature::getClassTypeId()))
-			return ;
+			return;
 
 		QString refText = onAddSelection(_msg, selObj, AFPText);
 		if (refText.length() > 0) {
 			std::vector<std::string> subNames;
 			subNames.push_back(_msg.pSubName);
 
-			if (m_AF1HasFocus/*m_ui->AF1LineEdit->isEnabled() && m_ui->AF1LineEdit->hasFocus()*/)
+			if (m_AF1HasFocus)
 			{
-				//m_ui->AF1LineEdit->blockSignals(true);
-				m_AFP->First.setValue(selObj, subNames);	
+				m_AFP->First.setValue(selObj, subNames);
+				if (m_AFP->Second.getValue())
+					m_AFP->Second.setValue((0));
 				setLineEdit(m_ui->AF1LineEdit, refText, _msg.pSubName);
 			}
-			else if (m_AF2HasFocus/*m_ui->AF2LineEdit->isEnabled() && m_ui->AF2LineEdit->hasFocus()*/)
+			else if (m_AF2HasFocus)
 			{
-				//m_ui->AF2LineEdit->blockSignals(true);
 				m_AFP->Second.setValue(selObj, subNames);
+				if (m_AFP->First.getValue())
+					m_AFP->First.setValue((0));
 				setLineEdit(m_ui->AF2LineEdit, refText, _msg.pSubName);
 			}
 		}
@@ -214,13 +209,11 @@ void TaskAFPFaceFace::onSelectionChanged(const Gui::SelectionChanges& _msg)
 
 void TaskAFPFaceFace::setLineEdit(QLineEdit* const _lnEdit, const QString _refText, const char* _subName)
 {
-	//_lnEdit->blockSignals(true);
 	_lnEdit->setText(_refText);
 	if (_subName == "")
 		_lnEdit->setProperty("FaceName", QByteArray());
 	else
 		_lnEdit->setProperty("FaceName", QByteArray(_subName));
-	//_lnEdit->blockSignals(false);
 }
 
 const QString TaskAFPFaceFace::onAddSelection(const Gui::SelectionChanges& _msg, App::DocumentObject* _selObj, QString& _AFPText)
@@ -320,21 +313,22 @@ void TaskAFPFaceFace::onConstraintSelection(const QString& _selText)
 		m_ui->constraintParamLineEdit->setText(tr("0"));
 		m_AFP->Value.setValue(0);
 	}
-	//App::GetApplication().getActiveDocument()->recompute();
-	//m_vp->draw();
 }
 
 void TaskAFPFaceFace::slotUndoDocument(const Gui::Document& _Doc)
 {
-	//if (origins.empty()) {
-	//	QTimer::singleShot(100, &Gui::Control(), SLOT(closeDialog()));
-	//}
+	QTimer::singleShot(100, &Gui::Control(), SLOT(closeDialog()));
 }
 
 void TaskAFPFaceFace::slotDeleteDocument(const Gui::Document& _Doc)
 {
-	//origins.clear();
-	//QTimer::singleShot(100, &Gui::Control(), SLOT(closeDialog()));
+	QTimer::singleShot(100, &Gui::Control(), SLOT(closeDialog()));
+}
+
+void TaskAFPFaceFace::slotDeletedObject(const Gui::ViewProviderDocumentObject& Obj)
+{
+	if (this->m_vp == &Obj)
+		this->m_vp = nullptr;
 }
 
 void TaskAFPFaceFace::exitSelectionMode()
@@ -372,7 +366,6 @@ bool TaskAFPFaceFace::eventFilter(QObject* _watched, QEvent* _event)
 //TaskDlgAFPFaceFace::TaskDlgAFPFaceFace(PartDesign::AFP* _AFP) : TaskDialog(), m_AFP(_AFP)
 TaskDlgAFPFaceFace::TaskDlgAFPFaceFace(ViewProviderAFP* _vp) : TaskDialog(), m_vp(_vp)
 {
-	//m_facePick = new TaskAFPFaceFace(_AFP);
 	m_facePick = new TaskAFPFaceFace(_vp);
 	Content.push_back(m_facePick);
 }
@@ -386,27 +379,57 @@ TaskDlgAFPFaceFace::~TaskDlgAFPFaceFace()
 }
 
 //==== calls from the TaskView ===============================================================
-void TaskDlgAFPFaceFace::open()
-{
-
-}
-
-void TaskDlgAFPFaceFace::clicked(int)
-{
-
-}
-
 bool TaskDlgAFPFaceFace::accept()
 {
 	//std::string document = getDocumentName(); // needed because resetEdit() deletes this instance
 	//Gui::Command::doCommand(Gui::Command::Gui, "Gui.getDocument('%s').resetEdit()", document.c_str());
+
+	// detach the task panel from the selection to avoid to invoke
+	// eventually onAddSelection when the selection changes
+	std::vector<QWidget*> subwidgets = getDialogContent();
+	for (auto it : subwidgets) {
+		TaskAFPFaceFace* facePick = qobject_cast<TaskAFPFaceFace*>(it);
+		if (facePick)
+			facePick->detachSelection();
+	}
+
+	Gui::Command::doCommand(Gui::Command::Gui, "Gui.activeDocument().resetEdit()");
+	Gui::Command::commitCommand();
+
 	return true;
 }
 
 bool TaskDlgAFPFaceFace::reject()
 {
+	// detach the task panel from the selection to avoid to invoke
+	// eventually onAddSelection when the selection changes
+	std::vector<QWidget*> subwidgets = getDialogContent();
+	for (auto it : subwidgets) {
+		TaskAFPFaceFace* facePick = qobject_cast<TaskAFPFaceFace*>(it);
+		if (facePick)
+			facePick->detachSelection();
+	}
+
+	// roll back the done things
+	Gui::Command::abortCommand();
+	Gui::Command::doCommand(Gui::Command::Gui, "Gui.activeDocument().resetEdit()");
+
 	//std::string document = getDocumentName(); // needed because resetEdit() deletes this instance
-	//Gui::Command::doCommand(Gui::Command::Gui, "Gui.getDocument('%s').resetEdit()", document.c_str());
+	////Gui::Command::doCommand(Gui::Command::Gui, "Gui.getDocument('%s').resetEdit()", document.c_str());
+	//PartDesign::AFP* AFPObj = dynamic_cast<PartDesign::AFP*>(m_vp->getObject());
+
+	////AFPObj->ID.setValue("");
+	////AFPObj->UUID.setValue("");
+	////AFPObj->Type.setValue(long(6));
+	////AFPObj->First.setValue((0));
+	////AFPObj->Second.setValue((0));
+	////AFPObj->Constraint.setValue(long(6));
+	////AFPObj->Value.setValue(0);
+	////AFPObj->Orientation.setValue(long(4));
+	////AFPObj->SolutionSpace.setValue(long(3));
+
+	//Gui::Command::doCommand(Gui::Command::Doc, "Gui.getDocument('%s').removeObject("")", document.c_str(), AFPObj->getNameInDocument());
+
 	return true;
 }
 

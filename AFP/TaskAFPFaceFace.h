@@ -49,6 +49,10 @@ namespace PartDesignGui
 		virtual void slotDeleteDocument(const Gui::Document& _Doc);
 
 	private:
+		/** Notifies when the object is about to be removed. */
+		virtual void slotDeletedObject(const Gui::ViewProviderDocumentObject& Obj);
+
+	private:
 		Ui_TaskAFPFaceFace* m_ui;
 		QWidget*            m_proxy;
 		PartDesign::AFP*    m_AFP;
@@ -56,9 +60,6 @@ namespace PartDesignGui
 
 		bool                m_AF1HasFocus;
 		bool                m_AF2HasFocus;
-
-		std::string         m_documentName;
-		QString             m_featureStr;
 	};
 
 	/// simulation dialog for the TaskView
@@ -72,10 +73,6 @@ namespace PartDesignGui
 		~TaskDlgAFPFaceFace();
 
 	public:
-		/// is called the TaskView when the dialog is opened
-		virtual void open();
-		/// is called by the framework if an button is clicked which has no accept or reject role
-		virtual void clicked(int);
 		/// is called by the framework if the dialog is accepted (Ok)
 		virtual bool accept();
 		/// is called by the framework if the dialog is rejected (Cancel)
@@ -91,9 +88,12 @@ namespace PartDesignGui
 			return QDialogButtonBox::Ok | QDialogButtonBox::Cancel;
 		}
 
+		/// Returns the view provider dialog is runed for
+		PartDesignGui::ViewProviderAFP *viewProvider() const { return m_vp; }
+
 	protected:
 		TaskAFPFaceFace* m_facePick;
-		PartDesign::AFP* m_AFP;
+		//PartDesign::AFP* m_AFP;
 		ViewProviderAFP* m_vp;
 	};
 }
